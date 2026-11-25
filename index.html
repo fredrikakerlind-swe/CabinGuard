@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CabinGuard by Haysquare · Trygghet för fritidshuset</title>
+<meta name="description" content="CabinGuard lyssnar efter vatten, frost, intrång och larm i ditt fritidshus. Analysen sker i enheten och inget ljud sparas.">
+<meta name="theme-color" content="#173c31">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --forest:#173c31; --forest-2:#1f4d3f; --forest-3:#2c6352;
+  --moss:#7fa68f; --cream:#f7f2e8; --paper:#fffdf8; --sand:#ece3d2;
+  --ink:#16211d; --muted:#5d6b65; --line:#e3dccd;
+  --amber:#e3a03a; --water:#3b82b0; --alert:#c9513b; --ok:#3f9c6d; --frost:#6aa9d8;
+  --radius:20px; --shadow:0 20px 50px -24px rgba(23,60,49,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--cream);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:600;line-height:1.15;letter-spacing:-.01em}
+a{color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.eyebrow{display:inline-block;font-size:.78rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--forest-3);margin-bottom:14px}
+.btn{display:inline-flex;align-items:center;gap:10px;border:0;cursor:pointer;font:600 .98rem Inter,sans-serif;padding:14px 24px;border-radius:999px;text-decoration:none;transition:transform .2s,box-shadow .2s,background .2s}
+.btn-primary{background:var(--amber);color:#2a1d05;box-shadow:0 10px 24px -10px rgba(227,160,58,.8)}
+.btn-primary:hover{transform:translateY(-2px)}
+.btn-ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.btn-ghost:hover{background:rgba(255,255,255,.16)}
+.btn-dark{background:var(--forest);color:#fff}
+.btn-dark:hover{background:var(--forest-2)}
+section{padding:110px 0}
+.section-head{max-width:640px;margin-bottom:56px}
+.section-head h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:14px}
+.section-head p{color:var(--muted);font-size:1.08rem}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* NAV */
+nav{position:fixed;inset:0 0 auto 0;z-index:50;transition:background .3s,box-shadow .3s}
+nav.scrolled{background:rgba(23,60,49,.92);backdrop-filter:blur(12px);box-shadow:0 6px 30px -12px rgba(0,0,0,.4)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:76px}
+.logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:700;font-size:1.1rem}
+.logo small{display:block;font-weight:500;font-size:.68rem;letter-spacing:.16em;opacity:.7;text-transform:uppercase}
+.nav-links{display:flex;gap:30px;align-items:center}
+.nav-links a{color:rgba(255,255,255,.85);text-decoration:none;font-size:.94rem;font-weight:500}
+.nav-links a:hover{color:#fff}
+.nav-links .btn{padding:10px 18px;font-size:.9rem}
+@media(max-width:860px){.nav-links a:not(.btn){display:none}}
+
+/* HERO */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;background:radial-gradient(1200px 600px at 80% 10%,#2c6352 0%,transparent 60%),linear-gradient(160deg,#10302a 0%,var(--forest) 55%,#1d4a3c 100%);color:#fff;overflow:hidden;padding:130px 0 90px}
+.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:50px;align-items:center}
+.hero h1{font-size:clamp(2.6rem,5.6vw,4.4rem);margin-bottom:22px}
+.hero h1 em{font-style:italic;color:var(--amber)}
+.hero p.lead{font-size:1.18rem;color:rgba(255,255,255,.8);max-width:520px;margin-bottom:34px}
+.hero .eyebrow{color:var(--moss)}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:40px}
+.badges{display:flex;gap:22px;flex-wrap:wrap;font-size:.9rem;color:rgba(255,255,255,.78)}
+.badges span{display:flex;align-items:center;gap:8px}
+.badges svg{width:18px;height:18px;color:var(--amber)}
+.hero-art{position:relative}
+.hero-art svg{width:100%;height:auto;display:block;filter:drop-shadow(0 30px 60px rgba(0,0,0,.35))}
+.float-card{position:absolute;background:rgba(255,253,248,.96);color:var(--ink);border-radius:16px;padding:14px 18px;box-shadow:var(--shadow);font-size:.86rem;display:flex;gap:12px;align-items:center;animation:bob 6s ease-in-out infinite}
+.float-card b{display:block;font-size:.92rem}
+.float-card .dot{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.fc1{left:-20px;bottom:18%}
+.fc2{right:-10px;top:10%;animation-delay:-3s}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.wave{animation:pulse 3s ease-out infinite;transform-origin:center;transform-box:fill-box}
+.wave.w2{animation-delay:1s}.wave.w3{animation-delay:2s}
+@keyframes pulse{0%{opacity:.9;transform:scale(.4)}100%{opacity:0;transform:scale(1.6)}}
+.snow{position:absolute;inset:0;pointer-events:none}
+@media(max-width:900px){.hero .wrap{grid-template-columns:1fr}.hero-art{max-width:520px;margin:20px auto 0}.fc1{left:0}.fc2{right:0}}
+
+/* STRIP */
+.strip{background:var(--paper);border-bottom:1px solid var(--line);padding:34px 0}
+.strip .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.stat b{display:block;font-family:Fraunces,serif;font-size:2rem;color:var(--forest)}
+.stat span{color:var(--muted);font-size:.92rem}
+@media(max-width:760px){.strip .wrap{grid-template-columns:repeat(2,1fr)}}
+
+/* FEATURES */
+.grid-feat{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.feat{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:30px;transition:transform .3s,box-shadow .3s}
+.feat:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.feat .ic{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;margin-bottom:20px}
+.feat .ic svg{width:26px;height:26px}
+.feat h3{font-size:1.3rem;margin-bottom:8px}
+.feat p{color:var(--muted);font-size:.97rem}
+.feat.hl{background:var(--forest);color:#fff;border-color:var(--forest)}
+.feat.hl p{color:rgba(255,255,255,.75)}
+@media(max-width:900px){.grid-feat{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.grid-feat{grid-template-columns:1fr}}
+
+/* SCENARIO DEMO */
+#demo{background:var(--sand)}
+.demo-shell{display:grid;grid-template-columns:280px 1fr;gap:26px;align-items:start}
+.tabs{display:flex;flex-direction:column;gap:8px}
+.tab{display:flex;align-items:center;gap:12px;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font:500 .96rem Inter,sans-serif;color:var(--ink);cursor:pointer;transition:all .2s}
+.tab:hover{border-color:var(--moss)}
+.tab.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+.tab i{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.app{background:var(--paper);border-radius:28px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--line)}
+.app-top{display:flex;justify-content:space-between;align-items:center;padding:22px 28px;border-bottom:1px solid var(--line)}
+.app-top h3{font-size:1.35rem}
+.app-top small{color:var(--muted);display:block;font-size:.85rem}
+.conn{display:flex;gap:14px;font-size:.82rem;color:var(--muted);align-items:center}
+.conn span{display:flex;align-items:center;gap:6px}
+.status-banner{margin:22px 28px 0;border-radius:16px;padding:18px 20px;display:flex;gap:16px;align-items:center;transition:background .4s}
+.status-banner .big{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;color:#fff}
+.status-banner .big svg{width:24px;height:24px}
+.status-banner b{font-size:1.08rem;display:block}
+.status-banner p{font-size:.93rem;opacity:.85}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:22px 28px}
+.metric{background:var(--cream);border-radius:14px;padding:14px 16px}
+.metric small{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em}
+.metric b{display:block;font-family:Fraunces,serif;font-size:1.65rem;transition:color .3s}
+.metric em{font-style:normal;font-size:.8rem;color:var(--muted)}
+.chart-box{padding:0 28px 8px}
+.chart-box .lbl{display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted);margin-bottom:6px}
+.chart-box svg{width:100%;height:120px;display:block}
+.events{padding:10px 28px 26px}
+.events h4{font-size:.82rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:10px 0}
+.ev{display:flex;gap:14px;padding:10px 0;border-top:1px dashed var(--line);font-size:.92rem}
+.ev time{font-variant-numeric:tabular-nums;color:var(--muted);min-width:44px}
+.ev i{width:8px;height:8px;border-radius:50%;margin-top:8px;flex-shrink:0}
+@media(max-width:900px){.demo-shell{grid-template-columns:1fr}.tabs{flex-direction:row;overflow-x:auto}.tab{white-space:nowrap}.metrics{grid-template-columns:1fr 1fr}}
+
+/* LIVE */
+#live{background:var(--forest);color:#fff;position:relative;overflow:hidden}
+#live .section-head p{color:rgba(255,255,255,.75)}
+#live .eyebrow{color:var(--moss)}
+.live-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:24px}
+.panel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:28px}
+.panel h4{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:14px;font-family:Inter}
+.live-status{display:flex;align-items:center;gap:18px;margin-bottom:24px}
+.orb{width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.08);display:grid;place-items:center;position:relative;flex-shrink:0}
+.orb::before,.orb::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--amber);opacity:0}
+.listening .orb::before{animation:ring 2s infinite}.listening .orb::after{animation:ring 2s 1s infinite}
+@keyframes ring{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(1.6)}}
+.orb svg{width:34px;height:34px;color:var(--amber)}
+.verdict b{font-family:Fraunces,serif;font-size:1.6rem;display:block}
+.verdict span{color:rgba(255,255,255,.7)}
+.meter{height:12px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;margin:6px 0 4px}
+.meter div{height:100%;width:0;background:linear-gradient(90deg,var(--ok),var(--amber),var(--alert));transition:width .12s}
+.db{font-size:.85rem;color:rgba(255,255,255,.65);display:flex;justify-content:space-between}
+.hears{list-style:none;margin-top:22px}
+.hears li{display:grid;grid-template-columns:1fr 60px;gap:10px;align-items:center;margin-bottom:10px;font-size:.93rem}
+.hears .bar{grid-column:1/-1;height:6px;background:rgba(255,255,255,.08);border-radius:9px;overflow:hidden;margin-top:-4px}
+.hears .bar div{height:100%;background:var(--moss);border-radius:9px;transition:width .3s}
+.hears .pct{text-align:right;color:rgba(255,255,255,.6);font-variant-numeric:tabular-nums}
+.log{list-style:none;max-height:330px;overflow:auto}
+.log li{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:.92rem;animation:slide .4s ease}
+.log time{color:rgba(255,255,255,.55);font-variant-numeric:tabular-nums;min-width:62px}
+.log .tag{font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:99px;margin-left:auto;height:fit-content;white-space:nowrap}
+.empty{color:rgba(255,255,255,.5);font-size:.93rem;padding:12px 0}
+@keyframes slide{from{opacity:0;transform:translateY(-6px)}}
+.live-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px;align-items:center}
+.note{font-size:.84rem;color:rgba(255,255,255,.6);margin-top:18px;display:flex;gap:8px}
+.try{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.try span{font-size:.8rem;padding:5px 12px;border-radius:99px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
+@media(max-width:900px){.live-grid{grid-template-columns:1fr}}
+
+/* WHY / INSURANCE */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.checks{list-style:none;margin-top:26px}
+.checks li{display:flex;gap:14px;margin-bottom:18px}
+.checks li svg{width:24px;height:24px;flex-shrink:0;color:var(--ok);margin-top:2px}
+.checks b{display:block}
+.checks span{color:var(--muted);font-size:.96rem}
+.insure{background:linear-gradient(150deg,var(--forest) 0%,#285a49 100%);color:#fff;border-radius:28px;padding:40px;position:relative;overflow:hidden}
+.insure h3{font-size:1.7rem;margin-bottom:12px}
+.insure p{color:rgba(255,255,255,.78);margin-bottom:22px}
+.receipt{background:var(--paper);color:var(--ink);border-radius:16px;padding:20px;font-size:.9rem}
+.receipt div{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line)}
+.receipt div:last-child{border:0}
+.receipt time{color:var(--muted);font-variant-numeric:tabular-nums}
+@media(max-width:900px){.split{grid-template-columns:1fr}}
+
+/* STEPS */
+#steg{background:var(--paper)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;counter-reset:s}
+.step{position:relative;padding-top:64px}
+.step::before{counter-increment:s;content:counter(s);position:absolute;top:0;left:0;width:48px;height:48px;border-radius:50%;background:var(--amber);color:#2a1d05;font:700 1.2rem Fraunces,serif;display:grid;place-items:center}
+.step h3{font-size:1.3rem;margin-bottom:8px}
+.step p{color:var(--muted)}
+@media(max-width:800px){.steps{grid-template-columns:1fr}}
+
+/* PRIVACY */
+.privacy{background:var(--sand);border-radius:28px;padding:50px;display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:center}
+.shield{width:110px;height:110px;border-radius:30px;background:var(--forest);display:grid;place-items:center}
+.shield svg{width:56px;height:56px;color:var(--amber)}
+.privacy h2{font-size:2rem;margin-bottom:12px}
+.privacy p{color:var(--muted)}
+.flow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:20px;font-size:.88rem}
+.flow span{background:var(--paper);padding:7px 14px;border-radius:99px;border:1px solid var(--line)}
+.flow .x{text-decoration:line-through;color:var(--alert)}
+@media(max-width:700px){.privacy{grid-template-columns:1fr;padding:32px}}
+
+/* PRICING */
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:860px}
+.price{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:34px}
+.price.pop{border:2px solid var(--forest);position:relative}
+.price.pop::after{content:"Med försäkringsrabatt";position:absolute;top:-13px;left:30px;background:var(--forest);color:#fff;font-size:.75rem;font-weight:600;padding:4px 12px;border-radius:99px}
+.price h3{font-size:1.2rem;margin-bottom:6px}
+.price .amt{font-family:Fraunces,serif;font-size:3rem;color:var(--forest);line-height:1.1}
+.price .amt small{font-size:1rem;color:var(--muted);font-family:Inter}
+.price ul{list-style:none;margin-top:18px}
+.price li{padding:6px 0;color:var(--muted);font-size:.95rem;display:flex;gap:10px}
+.price li::before{content:"✓";color:var(--ok);font-weight:700}
+.fine{color:var(--muted);font-size:.86rem;margin-top:20px}
+@media(max-width:700px){.price-grid{grid-template-columns:1fr}}
+
+/* INTEREST */
+.interest{background:var(--forest);color:#fff;border-radius:28px;padding:56px;text-align:center}
+.interest h2{font-size:2.3rem;margin-bottom:10px}
+.interest p{color:rgba(255,255,255,.75);margin-bottom:28px}
+.interest form{display:flex;gap:10px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center}
+.interest input{flex:1;min-width:240px;padding:14px 20px;border-radius:999px;border:0;font:500 1rem Inter,sans-serif}
+.thanks{margin-top:16px;color:var(--amber);min-height:1.5em}
+
+/* FAQ */
+.faq{max-width:780px}
+details{border-bottom:1px solid var(--line);padding:22px 0}
+summary{cursor:pointer;list-style:none;font-weight:600;font-size:1.08rem;display:flex;justify-content:space-between;gap:20px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:1.5rem;color:var(--forest-3);transition:transform .3s;line-height:1}
+details[open] summary::after{transform:rotate(45deg)}
+details p{color:var(--muted);margin-top:12px}
+
+footer{background:#0f2a23;color:rgba(255,255,255,.65);padding:50px 0;font-size:.9rem}
+footer .wrap{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap}
+footer .logo{margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="wrap">
+    <a href="#" class="logo">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><rect width="34" height="34" rx="10" fill="#e3a03a"/><path d="M8 18 17 9.5 26 18v7.5H8z" fill="#173c31"/><path d="M14 25.5v-5h6v5" fill="#e3a03a"/></svg>
+      <span>CabinGuard<small>by Haysquare</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="#funktioner">Funktioner</a>
+      <a href="#demo">Demo</a>
+      <a href="#live">Live demo</a>
+      <a href="#forsakring">Försäkring</a>
+      <a href="#pris">Pris</a>
+      <a href="#live" class="btn btn-primary">Prova live</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <canvas class="snow" id="snow"></canvas>
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Trygghet på avstånd</span>
+      <h1>Stugan står tom.<br><em>CabinGuard</em> lyssnar.</h1>
+      <p class="lead">En liten smart enhet som lär sig hur ditt fritidshus låter när allt är som det ska. Den larmar om vatten som rinner, frost, intrång och brandlarm, långt innan du hade märkt något själv.</p>
+      <div class="hero-cta">
+        <a href="#demo" class="btn btn-primary">Se hur det fungerar
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a href="#live" class="btn btn-ghost">Testa med din mikrofon</a>
+      </div>
+      <div class="badges">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M7 8v8M17 8v8M2 11v2M22 11v2"/></svg>Ljudanalys med AI</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16"/></svg>Eget mobilnät, inget wifi</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Inget ljud sparas</span>
+      </div>
+    </div>
+    <div class="hero-art">
+      <svg viewBox="0 0 520 460" fill="none">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c6352"/><stop offset="1" stop-color="#173c31"/></linearGradient>
+          <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8432f"/><stop offset="1" stop-color="#8f2f20"/></linearGradient>
+          <clipPath id="c"><rect width="520" height="460" rx="36"/></clipPath>
+        </defs>
+        <g clip-path="url(#c)">
+          <rect width="520" height="460" fill="url(#sky)"/>
+          <circle cx="410" cy="95" r="38" fill="#f7f2e8" opacity=".9"/>
+          <circle cx="425" cy="85" r="34" fill="#2c6352"/>
+          <path d="M0 300 90 200 170 270 260 170 360 260 440 190 520 250V460H0z" fill="#245445"/>
+          <path d="M260 170 290 197 275 200 260 186 246 202 232 196z" fill="#f7f2e8" opacity=".85"/>
+          <path d="M90 200 112 225 98 226 90 216 80 228 68 224z" fill="#f7f2e8" opacity=".85"/>
+          <g fill="#173c31">
+            <path d="M40 360 62 300 84 360z"/><path d="M46 330 62 285 78 330z"/>
+            <path d="M440 365 466 290 492 365z"/><path d="M447 330 466 275 485 330z"/>
+            <path d="M400 380 418 330 436 380z"/>
+          </g>
+          <path d="M0 370Q260 330 520 372V460H0z" fill="#f7f2e8"/>
+          <!-- cabin -->
+          <rect x="160" y="250" width="200" height="120" fill="url(#wall)"/>
+          <path d="M140 258 260 175 380 258z" fill="#2a2420"/>
+          <path d="M140 258 260 175 380 258 368 262 260 188 152 262z" fill="#f7f2e8"/>
+          <rect x="160" y="250" width="200" height="6" fill="#f7f2e8" opacity=".9"/>
+          <rect x="190" y="282" width="46" height="40" fill="#f3d48a"/>
+          <path d="M213 282v40M190 302h46" stroke="#f7f2e8" stroke-width="4"/>
+          <rect x="190" y="282" width="46" height="40" fill="none" stroke="#f7f2e8" stroke-width="5"/>
+          <rect x="272" y="296" width="44" height="74" fill="#5a2a1d"/>
+          <rect x="272" y="296" width="44" height="74" fill="none" stroke="#f7f2e8" stroke-width="5"/>
+          <rect x="310" y="196" width="18" height="40" fill="#2a2420"/>
+          <!-- device -->
+          <g transform="translate(205 300)">
+            <circle class="wave" r="26" stroke="#e3a03a" stroke-width="2.5" fill="none"/>
+            <circle class="wave w2" r="26" stroke="#e3a03a" stroke-width="2.5" fill="none"/>
+            <circle class="wave w3" r="26" stroke="#e3a03a" stroke-width="2.5" fill="none"/>
+            <circle r="8" fill="#e3a03a"/>
+          </g>
+          <path d="M0 395Q260 365 520 398" stroke="#e7dfd0" stroke-width="3" fill="none"/>
+        </g>
+      </svg>
+      <div class="float-card fc1"><div class="dot" style="background:#e4f2ea"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3f9c6d" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg></div><div><b>Allt normalt</b>Fjällstugan, Åre · 4,2 °C</div></div>
+      <div class="float-card fc2"><div class="dot" style="background:#e3eef6"><svg width="18" height="18" viewBox="0 0 24 24" fill="#3b82b0"><path d="M12 2s7 8 7 13a7 7 0 0 1-14 0c0-5 7-13 7-13z"/></svg></div><div><b>Mögelrisk: låg</b>Fukt 54 %, stabil</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="strip">
+  <div class="wrap">
+    <div class="stat reveal"><b>630 000+</b><span>fritidshus i Sverige</span></div>
+    <div class="stat reveal"><b>~50 %</b><span>av stugskadorna sker vintertid</span></div>
+    <div class="stat reveal"><b>Veckor</b><span>kan gå innan en läcka upptäcks</span></div>
+    <div class="stat reveal"><b>0 sek</b><span>ljud som sparas eller skickas</span></div>
+  </div>
+</div>
+
+<section id="funktioner">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Funktioner</span>
+      <h2>Upptäck problemen innan de blir skador</h2>
+      <p>Ett tomt hus ska vara tyst. CabinGuard vet hur din stuga låter en vanlig tisdag i februari, och säger till när något låter annorlunda.</p>
+    </div>
+    <div class="grid-feat">
+      <div class="feat reveal"><div class="ic" style="background:#e3eef6;color:var(--water)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s7 8 7 13a7 7 0 0 1-14 0c0-5 7-13 7-13z"/></svg></div><h3>Vatten som rinner</h3><p>Hör droppande och rinnande vatten där det inte borde finnas något. Den dyraste skadan i ett fritidshus, upptäckt på minuter i stället för veckor.</p></div>
+      <div class="feat reveal"><div class="ic" style="background:#e9f1fa;color:var(--frost)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M4 7l16 10M20 7 4 17M9 4l3 3 3-3M9 20l3-3 3 3"/></svg></div><h3>Frost och strömavbrott</h3><p>Varnar när temperaturen närmar sig gränsen eller strömmen går. Batteriet gör att larmet når dig även när huset är strömlöst.</p></div>
+      <div class="feat reveal"><div class="ic" style="background:#f6e7e3;color:var(--alert)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M10 21v-6h4v6"/></svg></div><h3>Oväntad aktivitet</h3><p>Känner igen glas som krossas, dörrar, fotsteg och röster när ingen ska vara där.</p></div>
+      <div class="feat reveal"><div class="ic" style="background:#eef3ea;color:var(--ok)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a4 4 0 0 0-4 4v8a4 4 0 1 0 8 0V7a4 4 0 0 0-4-4zM12 11v6"/></svg></div><h3>Mögelrisk i förväg</h3><p>Räknar risk utifrån fukt och temperatur över tid och säger till veckor innan möglet hinner växa.</p></div>
+      <div class="feat reveal"><div class="ic" style="background:#fbf0dc;color:#b07514"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></div><h3>Brandlarm och skadedjur</h3><p>Hör en brandvarnare som tjuter eller piper om batteri, och möss som gnager i väggarna.</p></div>
+      <div class="feat hl reveal"><div class="ic" style="background:rgba(227,160,58,.18);color:var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16"/></svg></div><h3>Fungerar där wifi saknas</h3><p>Inbyggt mobilnät för sakernas internet och batteri som är gjort för att hålla länge. Ingen router behöver stå på i stugan.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Interaktiv demo</span>
+      <h2>Så ser det ut i appen</h2>
+      <p>Välj en situation och se hur CabinGuard reagerar. Värdena är simulerade, ingen mikrofon behövs.</p>
+    </div>
+    <div class="demo-shell reveal">
+      <div class="tabs" id="tabs"></div>
+      <div class="app">
+        <div class="app-top">
+          <div><h3>Fjällstugan</h3><small>Åre · senast uppdaterad <span id="upd">nyss</span></small></div>
+          <div class="conn"><span id="sig">● Mobilnät</span><span id="bat">🔋 96 %</span></div>
+        </div>
+        <div class="status-banner" id="banner">
+          <div class="big" id="bigic"></div>
+          <div><b id="stTitle"></b><p id="stText"></p></div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><small>Temperatur</small><b id="mT"></b><em id="mTn"></em></div>
+          <div class="metric"><small>Luftfukt</small><b id="mH"></b><em id="mHn"></em></div>
+          <div class="metric"><small>Ljudnivå</small><b id="mS"></b><em id="mSn"></em></div>
+          <div class="metric"><small>Mögelrisk</small><b id="mM"></b><em id="mMn"></em></div>
+        </div>
+        <div class="chart-box">
+          <div class="lbl"><span id="chartLbl">Temperatur senaste 24 timmarna</span><span>nu</span></div>
+          <svg id="chart" viewBox="0 0 600 120" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="events"><h4>Händelser</h4><div id="evs"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="live">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Live demo</span>
+      <h2>Låt CabinGuard lyssna på ditt rum</h2>
+      <p>En öppen AI-modell (YAMNet, 521 ljudtyper) klassar ljudet runt dig i realtid. Allt sker i din webbläsare; ljudet lämnar aldrig din enhet.</p>
+    </div>
+    <div class="live-grid reveal">
+      <div class="panel" id="livePanel">
+        <h4>Bedömning</h4>
+        <div class="live-status">
+          <div class="orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg></div>
+          <div class="verdict"><b id="vTitle">Lyssnar inte</b><span id="vText">Aktivera mikrofonen för att starta.</span></div>
+        </div>
+        <h4>Ljudnivå</h4>
+        <div class="meter"><div id="meter"></div></div>
+        <div class="db"><span>tyst</span><span id="dbv">· dB</span><span>högt</span></div>
+        <h4 style="margin-top:26px">Modellen hör</h4>
+        <ul class="hears" id="hears"><li class="empty" style="display:block">Inget ännu.</li></ul>
+        <div class="live-actions">
+          <button class="btn btn-primary" id="micBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/></svg>
+            <span>Aktivera lyssning</span></button>
+          <span id="loadMsg" style="font-size:.88rem;color:rgba(255,255,255,.7)"></span>
+        </div>
+        <div class="try"><span>💧 Spola vatten</span><span>🚪 Knacka</span><span>🥂 Klirra med glas</span><span>🗣 Prata</span><span>🎵 Spela musik</span><span>🐕 Hundskall</span></div>
+      </div>
+      <div class="panel">
+        <h4>Händelselogg med tidsstämpel</h4>
+        <ul class="log" id="log"><li class="empty">Inga händelser ännu.</li></ul>
+        <p class="note"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Modellen är inte tränad specifikt för CabinGuard, så bedömningarna är ungefärliga. Första gången laddas en modell på cirka 4 MB.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="forsakring">
+  <div class="wrap split">
+    <div class="reveal">
+      <span class="eyebrow">Tillsammans med försäkringsbolaget</span>
+      <h2 style="font-size:clamp(2rem,4vw,2.7rem);margin-bottom:14px">Mindre skador. Enklare skadereglering.</h2>
+      <p style="color:var(--muted);font-size:1.06rem">Vattenskador i obebodda hus är dyra för alla. CabinGuard är byggd för att kunna erbjudas via försäkringsbolaget, som en förmån eller med rabatt på premien.</p>
+      <ul class="checks">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 7"/></svg><div><b>Tidig upptäckt</b><span>En läcka som hittas efter en timme kostar en bråkdel av en som upptäcks efter tre veckor.</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 7"/></svg><div><b>Tidsstämplad logg</b><span>Visar när och hur en skada började, något som annars är svårt att bevisa.</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 7"/></svg><div><b>En enhet, många risker</b><span>Vatten, frost, ström, brand, intrång och skadedjur i samma lilla dosa.</span></div></li>
+      </ul>
+    </div>
+    <div class="insure reveal">
+      <h3>Exempel: händelselogg vid skada</h3>
+      <p>Det här kan delas med skadereglerare med ett klick.</p>
+      <div class="receipt">
+        <div><span>Temperatur under 3 °C</span><time>14 jan 02:12</time></div>
+        <div><span>Strömavbrott, batteridrift</span><time>14 jan 02:14</time></div>
+        <div><span>Ljud: rinnande vatten</span><time>14 jan 05:41</time></div>
+        <div><span>Larm skickat till ägare och granne</span><time>14 jan 05:42</time></div>
+        <div><span>Kvitterat av ägare</span><time>14 jan 06:03</time></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="steg">
+  <div class="wrap">
+    <div class="section-head reveal"><span class="eyebrow">Kom igång</span><h2>Tre enkla steg</h2></div>
+    <div class="steps">
+      <div class="step reveal"><h3>Placera enheten</h3><p>Ställ den centralt i stugan, gärna nära kök eller badrum. Ingen elektriker, inga kablar.</p></div>
+      <div class="step reveal"><h3>Aktivera i appen</h3><p>Skanna koden. Enheten kopplar upp sig via mobilnätet på egen hand, inget wifi behövs.</p></div>
+      <div class="step reveal"><h3>Låt den lära sig</h3><p>Under några dagar bygger CabinGuard en normalprofil för hur just din stuga låter och mår.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="privacy reveal">
+      <div class="shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+      <div>
+        <h2>Vi lyssnar efter mönster. Vi spelar aldrig in.</h2>
+        <p>Ljudet analyseras i enheten och raderas direkt. Det enda som lämnar stugan är en händelse, till exempel "rinnande vatten, 05:41". Inga röster, inga samtal, inga inspelningar.</p>
+        <div class="flow"><span>🎙 Mikrofon</span>→<span>🧠 Analys i enheten</span>→<span>📩 "Rinnande vatten"</span><span class="x">Ljudfil</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pris" style="padding-top:20px">
+  <div class="wrap">
+    <div class="section-head reveal"><span class="eyebrow">Pris</span><h2>Preliminär prisbild</h2><p>Illustrativt. CabinGuard är ett koncept och säljs inte ännu.</p></div>
+    <div class="price-grid">
+      <div class="price reveal"><h3>Direkt</h3><div class="amt">599 kr <small>engångskostnad</small></div><div style="margin-top:6px;color:var(--muted)">+ 49 kr per månad</div>
+        <ul><li>Enhet med batteri och mobilnät</li><li>AI-analys och notiser</li><li>Händelselogg och historik</li><li>Larm till upp till fem personer</li></ul></div>
+      <div class="price pop reveal"><h3>Via ditt försäkringsbolag</h3><div class="amt">0 kr <small>för enheten</small></div><div style="margin-top:6px;color:var(--muted)">Abonnemang ingår eller rabatteras</div>
+        <ul><li>Allt i Direkt</li><li>Möjlig rabatt på premien</li><li>Logg som stöd vid skadereglering</li><li>Skadeförebyggande råd</li></ul></div>
+    </div>
+    <p class="fine">Upplägget med försäkringsbolag är ett exempel och förutsätter avtal som inte finns ännu.</p>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="interest reveal">
+      <h2>Vill du veta när CabinGuard finns?</h2>
+      <p>Lämna din mejladress så hör vi av oss när pilotprogrammet startar.</p>
+      <form id="form"><input type="email" required placeholder="din@mejladress.se" aria-label="Mejladress"><button class="btn btn-primary" type="submit">Anmäl intresse</button></form>
+      <div class="thanks" id="thanks"></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap faq">
+    <div class="section-head reveal"><span class="eyebrow">Frågor och svar</span><h2>Bra att veta</h2></div>
+    <details><summary>Behöver jag en enhet i varje rum?</summary><p>Nej. En enhet räcker i de flesta stugor, eftersom ljud sprider sig i ett tyst hus. Större hus eller hus med källare kan behöva två.</p></details>
+    <details><summary>Behöver stugan internet?</summary><p>Nej. Enheten har inbyggt mobilnät och fungerar även där det saknas wifi och bredband.</p></details>
+    <details><summary>Upptäcks alla läckor?</summary><p>Nej. Läckor som hörs, till exempel rinnande eller droppande vatten, upptäcks. En långsam fuktskada inne i en vägg hörs inte, men kan synas som stigande fukt och mögelrisk.</p></details>
+    <details><summary>Ersätter CabinGuard brandvarnare eller hemlarm?</summary><p>Nej. CabinGuard är ett komplement som hör om brandvarnaren larmar och berättar det för dig. Brandvarnare ska alltid finnas.</p></details>
+    <details><summary>Vad händer vid strömavbrott?</summary><p>Enheten går på batteri och skickar en notis om att strömmen har gått, så du vet att värmen kan vara avslagen.</p></details>
+    <details><summary>Spelar ni in det som sägs i stugan?</summary><p>Nej, aldrig. Ljudet analyseras i enheten och raderas direkt. Bara en beskrivning av händelsen skickas vidare.</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div><a href="#" class="logo"><span>CabinGuard<small>by Haysquare</small></span></a><div>Ett produktkoncept framtaget under Haydays 2026.</div></div>
+    <div style="max-width:460px">Funktioner, priser och prestanda är inte verifierade. Mätvärdena i den interaktiva demon är simulerade. Live demon använder en allmän ljudmodell och analyserar ljudet lokalt i webbläsaren.</div>
+  </div>
+</footer>
+
+<script>
+/* nav + reveal */
+const nav=document.getElementById('nav');
+addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>40));
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* snow */
+(()=>{const c=document.getElementById('snow'),x=c.getContext('2d');let w,h,f=[];
+function rs(){w=c.width=c.offsetWidth;h=c.height=c.offsetHeight;f=Array.from({length:Math.min(120,w/10)},()=>({x:Math.random()*w,y:Math.random()*h,r:Math.random()*2+.6,s:Math.random()*.6+.2,d:Math.random()*.6-.3}))}
+rs();addEventListener('resize',rs);
+(function a(){x.clearRect(0,0,w,h);x.fillStyle='rgba(255,255,255,.55)';f.forEach(p=>{p.y+=p.s;p.x+=p.d;if(p.y>h){p.y=-4;p.x=Math.random()*w}x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill()});requestAnimationFrame(a)})();})();
+
+/* scenario demo */
+const C={ok:'#3f9c6d',warn:'#e3a03a',alert:'#c9513b',info:'#3b82b0',off:'#8a958f',water:'#3b82b0',frost:'#6aa9d8'};
+const ICONS={ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 12l5 5L20 7"/></svg>',
+warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/></svg>',
+water:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s7 8 7 13a7 7 0 0 1-14 0c0-5 7-13 7-13z"/></svg>'};
+const S=[
+ {id:'normal',name:'Normalläge',lvl:'ok',title:'Allt normalt',text:'Inga avvikelser de senaste 24 timmarna. Stugan låter och mår som vanligt.',T:'8,4 °C',Tn:'stabil',H:'51 %',Hn:'normal',Sd:'19 dB',Sn:'tyst',M:'Låg',Mn:'ingen åtgärd',sig:'● Mobilnät',bat:'🔋 96 %',series:'flat',
+  ev:[['07:00','Daglig kontroll: allt normalt','ok'],['Igår','Värmen höll 8 °C hela natten','ok']]},
+ {id:'water',name:'Vattenläckage',lvl:'alert',icon:'water',title:'Möjligt vattenläckage',text:'Rinnande vatten har hörts i 14 minuter i ett tomt hus. Stäng huvudkranen eller be grannen titta in.',T:'8,1 °C',Tn:'stabil',H:'68 %',Hn:'stiger snabbt',Sd:'41 dB',Sn:'rinnande vatten',M:'Hög',Mn:'om fukten består',sig:'● Mobilnät',bat:'🔋 96 %',series:'hum',
+  ev:[['05:42','Larm skickat till dig och Anders (granne)','alert'],['05:41','Ljud: rinnande vatten, köket','alert'],['05:28','Ljud: droppande vatten','warn']]},
+ {id:'intrusion',name:'Oväntad aktivitet',lvl:'alert',title:'Aktivitet när ingen ska vara där',text:'Glas som krossas följt av fotsteg och röster. Stugan är markerad som tom.',T:'7,9 °C',Tn:'faller',H:'52 %',Hn:'normal',Sd:'58 dB',Sn:'glas, fotsteg',M:'Låg',Mn:'ingen åtgärd',sig:'● Mobilnät',bat:'🔋 96 %',series:'drop',
+  ev:[['02:17','Ljud: röster, två personer','alert'],['02:16','Ljud: fotsteg','alert'],['02:15','Ljud: glas som krossas','alert']]},
+ {id:'frost',name:'Frostrisk',lvl:'warn',title:'Temperaturen sjunker',text:'2,8 °C och fallande. Värmen verkar ha slutat fungera. Risk för frusna rör inom några timmar.',T:'2,8 °C',Tn:'−0,6 °C per timme',H:'47 %',Hn:'normal',Sd:'16 dB',Sn:'värmepumpen tyst',M:'Låg',Mn:'ingen åtgärd',sig:'● Mobilnät',bat:'🔋 95 %',series:'frost',
+  ev:[['03:10','Varning: under 3 °C','warn'],['23:40','Ljud: värmepumpen har slutat gå','warn']]},
+ {id:'power',name:'Strömavbrott',lvl:'warn',title:'Strömmen har gått',text:'Enheten går på batteri och fortsätter bevaka. Värmen är troligen avslagen.',T:'6,2 °C',Tn:'faller',H:'50 %',Hn:'normal',Sd:'12 dB',Sn:'helt tyst',M:'Låg',Mn:'ingen åtgärd',sig:'● Mobilnät',bat:'🔋 Batteridrift',series:'drop2',
+  ev:[['01:04','Strömavbrott, batteridrift aktiv','warn'],['01:04','Ljud: kylskåpet tystnade','info']]},
+ {id:'mold',name:'Mögelrisk',lvl:'warn',title:'Mögelrisken ökar',text:'Fukten har legat över 78 % i nio dagar. Starta avfuktaren eller höj grundvärmen två grader.',T:'5,1 °C',Tn:'stabil',H:'81 %',Hn:'hög i 9 dagar',Sd:'18 dB',Sn:'tyst',M:'Förhöjd',Mn:'agera inom 2 veckor',sig:'● Mobilnät',bat:'🔋 94 %',series:'humhigh',
+  ev:[['08:00','Råd: höj grundvärmen till 8 °C','info'],['Mån','Mögelrisk: från låg till förhöjd','warn']]}
+];
+const tabs=document.getElementById('tabs');
+S.forEach((s,i)=>{const b=document.createElement('button');b.className='tab'+(i?'':' active');b.innerHTML=`<i style="background:${C[s.lvl]}"></i>${s.name}`;b.onclick=()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));b.classList.add('active');show(s)};tabs.appendChild(b)});
+function seriesFor(k){const a=[];for(let i=0;i<48;i++){let v;const n=Math.sin(i/3)*.15+Math.random()*.1;
+ if(k==='flat')v=8.3+n;else if(k==='hum')v=i<40?51+n*4:51+(i-40)*2.3;else if(k==='drop')v=8.2+n-(i>44?.3:0);
+ else if(k==='frost')v=i<30?8.2+n:8.2-(i-30)*.3;else if(k==='drop2')v=i<38?8.3+n:8.3-(i-38)*.21;else v=i<10?62+n*5:62+(i-10)*.5+n*4;a.push(v)}return a}
+function draw(k,color){const d=seriesFor(k),mn=Math.min(...d)-1,mx=Math.max(...d)+1,svg=document.getElementById('chart');
+ const p=d.map((v,i)=>[i*600/47,110-(v-mn)/(mx-mn)*100]);const line=p.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ');
+ svg.innerHTML=`<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".3"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+ <path d="${line} L600 120 L0 120Z" fill="url(#g)"/><path d="${line}" fill="none" stroke="${color}" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+ <circle cx="${p[47][0]-4}" cy="${p[47][1]}" r="5" fill="${color}"/>`;
+ document.getElementById('chartLbl').textContent=(k.startsWith('hum')?'Luftfukt':'Temperatur')+' senaste 24 timmarna'}
+function show(s){const col=C[s.lvl],b=document.getElementById('banner');
+ b.style.background=col+'1f';const bi=document.getElementById('bigic');bi.style.background=col;bi.innerHTML=ICONS[s.icon||s.lvl];
+ stTitle.textContent=s.title;stText.textContent=s.text;
+ mT.textContent=s.T;mTn.textContent=s.Tn;mH.textContent=s.H;mHn.textContent=s.Hn;mS.textContent=s.Sd;mSn.textContent=s.Sn;mM.textContent=s.M;mMn.textContent=s.Mn;
+ mM.style.color=s.M==='Låg'?C.ok:(s.M==='Hög'?C.alert:C.warn);mT.style.color=s.id==='frost'?C.frost:'';mH.style.color=(s.id==='water'||s.id==='mold')?C.water:'';
+ sig.textContent=s.sig;bat.textContent=s.bat;
+ evs.innerHTML=s.ev.map(e=>`<div class="ev"><time>${e[0]}</time><i style="background:${C[e[2]]}"></i><span>${e[1]}</span></div>`).join('');
+ draw(s.series,s.series.startsWith('hum')?C.water:(s.id==='frost'?C.frost:(s.lvl==='ok'?C.ok:col)))}
+show(S[0]);
+
+/* live demo */
+const GROUPS=[
+ {key:'water',label:'Möjligt vattenläckage',text:'Ljud som liknar rinnande eller droppande vatten.',lvl:'alert',color:'#3b82b0',m:['water','drip','pour','trickle','faucet','sink','toilet','bathtub','fill (with liquid)','gurgling','stream','splash','liquid']},
+ {key:'alarm',label:'Larmsignal',text:'Något som låter som en brandvarnare eller ett larm.',lvl:'alert',color:'#c9513b',m:['smoke detector','fire alarm','alarm','siren','beep','buzzer']},
+ {key:'break',label:'Möjligt intrång',text:'Glas, slag eller dörrar. Stämmer det med att någon är där?',lvl:'alert',color:'#c9513b',m:['glass','shatter','breaking','smash','crash','door','knock','slam','tap','power tool','drill','sawing','hammer','chink','clink']},
+ {key:'people',label:'Människor i stugan',text:'Röster, skratt eller steg. Normalt om du är där, avvikande om stugan är tom.',lvl:'warn',color:'#e3a03a',m:['speech','conversation','laughter','laugh','giggle','chuckle','shout','whisper','child','singing','walk, footsteps','footsteps','cough','sneeze','clapping']},
+ {key:'music',label:'Musik spelas',text:'Musik i ett hus som ska vara tomt kan betyda att någon är där.',lvl:'warn',color:'#e3a03a',m:['music','guitar','piano','drum','song','instrument','pop music','rock music']},
+ {key:'animal',label:'Djur i närheten',text:'Djurljud. Gnagande och krafsande inne kan betyda skadedjur.',lvl:'warn',color:'#7fa68f',m:['dog','bark','cat','meow','animal','rodent','mouse','rat','bird','howl','growl','scratch']},
+ {key:'weather',label:'Väder utomhus',text:'Regn eller vind. Inget att göra något åt.',lvl:'ok',color:'#7fa68f',m:['rain','wind','thunder']},
+];
+const SV={'Speech':'Tal','Silence':'Tystnad','Music':'Musik','Laughter':'Skratt','Dog':'Hund','Bark':'Skall','Water':'Vatten','Water tap, faucet':'Vattenkran','Drip':'Dropp','Pour':'Hällande','Sink (filling or washing)':'Diskho','Door':'Dörr','Knock':'Knackning','Glass':'Glas','Chink, clink':'Klirr','Clapping':'Klappar','Typing':'Skrivande','Computer keyboard':'Tangentbord','Inside, small room':'Litet rum','Smoke detector, smoke alarm':'Brandvarnare','Alarm':'Larm','Walk, footsteps':'Fotsteg','Cat':'Katt','Whistling':'Visslande','Singing':'Sång','Cough':'Hosta','Narration, monologue':'Monolog','Conversation':'Samtal','Child speech, kid speaking':'Barnröst','Rain':'Regn','Wind':'Vind','Vehicle':'Fordon','Tap':'Knack','Animal':'Djur','Domestic animals, pets':'Husdjur','Mechanisms':'Mekanik','White noise':'Brus','Static':'Brus','Hubbub, speech noise, speech babble':'Sorl'};
+const tr=n=>SV[n]||n;
+let classifier=null,ctx=null,stream=null,proc=null,analyser=null,listening=false,lastLog={},rafId;
+const micBtn=document.getElementById('micBtn'),loadMsg=document.getElementById('loadMsg'),livePanel=document.getElementById('livePanel');
+function setVerdict(t,x,col){vTitle.textContent=t;vText.textContent=x;vTitle.style.color=col||''}
+function addLog(g,score){const now=new Date(),t=now.toLocaleTimeString('sv-SE');const ul=document.getElementById('log');const e=ul.querySelector('.empty');if(e)e.remove();
+ const li=document.createElement('li');const lv={alert:['Larm','#c9513b'],warn:['Varning','#e3a03a'],ok:['Info','#3f9c6d']}[g.lvl];
+ li.innerHTML=`<time>${t}</time><span>${g.label} <span style="color:rgba(255,255,255,.5)">· ${Math.round(score*100)} %</span></span><span class="tag" style="background:${lv[1]}33;color:${lv[1]}">${lv[0]}</span>`;ul.prepend(li);while(ul.children.length>30)ul.lastChild.remove()}
+async function loadModel(){
+ loadMsg.textContent='Laddar modellen…';
+ const {AudioClassifier,FilesetResolver}=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-audio@0.10.0');
+ const fs=await FilesetResolver.forAudioTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-audio@0.10.0/wasm');
+ classifier=await AudioClassifier.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/audio_classifier/yamnet/float32/1/yamnet.tflite'},maxResults:5,scoreThreshold:.05});
+}
+function handle(cats){
+ const top=cats.filter(c=>c.categoryName!=='Silence').slice(0,4);
+ const H=document.getElementById('hears');
+ const sil=cats[0]&&cats[0].categoryName==='Silence'&&cats[0].score>.5;
+ H.innerHTML=(sil?[{categoryName:'Silence',score:cats[0].score}]:top).map(c=>`<li><span>${tr(c.categoryName)}</span><span class="pct">${Math.round(c.score*100)} %</span><div class="bar"><div style="width:${Math.round(c.score*100)}%"></div></div></li>`).join('')||'<li class="empty" style="display:block">Inget tydligt ljud.</li>';
+ if(sil||!top.length){setVerdict('Tyst och lugnt','Inga avvikande ljud just nu.','#7fd1a4');return}
+ let best=null;
+ for(const c of top){if(c.score<.15)continue;const n=c.categoryName.toLowerCase();const g=GROUPS.find(G=>G.m.some(k=>n.includes(k)));if(g){best={g,score:c.score};break}}
+ if(!best){setVerdict('Vardagsljud','Inget som tyder på risk. Modellen hör: '+tr(top[0].categoryName).toLowerCase()+'.','#fff');return}
+ const col={alert:'#ff8a72',warn:'#f2bd63',ok:'#7fd1a4'}[best.g.lvl];
+ setVerdict(best.g.label,best.g.text,col);
+ const now=Date.now();if(!lastLog[best.g.key]||now-lastLog[best.g.key]>6000){addLog(best.g,best.score);}lastLog[best.g.key]=now;
+}
+function meterLoop(){const a=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(a);let s=0;for(const v of a)s+=v*v;const rms=Math.sqrt(s/a.length);
+ const db=Math.max(0,Math.min(100,20*Math.log10(rms+1e-8)+100));meter.style.width=Math.max(0,(db-25)/60*100)+'%';dbv.textContent='≈ '+Math.round(db-30)+' dB';rafId=requestAnimationFrame(meterLoop)}
+async function start(){
+ try{
+  micBtn.disabled=true;
+  if(!classifier)await loadModel();
+  loadMsg.textContent='Ber om mikrofon…';
+  stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  ctx=new AudioContext({sampleRate:16000});
+  const src=ctx.createMediaStreamSource(stream);
+  analyser=ctx.createAnalyser();analyser.fftSize=1024;src.connect(analyser);
+  proc=ctx.createScriptProcessor(16384,1,1);src.connect(proc);proc.connect(ctx.destination);
+  proc.onaudioprocess=e=>{const d=e.inputBuffer.getChannelData(0);const r=classifier.classify(d);if(r&&r[0])handle(r[0].classifications[0].categories)};
+  listening=true;livePanel.classList.add('listening');meterLoop();
+  micBtn.querySelector('span').textContent='Stoppa lyssning';loadMsg.textContent='Lyssnar lokalt i din webbläsare';
+  setVerdict('Lyssnar…','Gör ett ljud och se vad som händer.','#fff');
+ }catch(err){console.error(err);loadMsg.textContent='Kunde inte starta: '+(err.name==='NotAllowedError'?'mikrofonen nekades.':'kontrollera att sidan körs via https.');}
+ micBtn.disabled=false;
+}
+function stop(){listening=false;cancelAnimationFrame(rafId);if(proc)proc.disconnect();if(stream)stream.getTracks().forEach(t=>t.stop());if(ctx)ctx.close();
+ livePanel.classList.remove('listening');meter.style.width='0';dbv.textContent='· dB';micBtn.querySelector('span').textContent='Aktivera lyssning';loadMsg.textContent='';setVerdict('Lyssnar inte','Aktivera mikrofonen för att starta.')}
+micBtn.onclick=()=>listening?stop():start();
+
+/* form */
+document.getElementById('form').onsubmit=e=>{e.preventDefault();e.target.reset();document.getElementById('thanks').textContent='Tack! Det här är en demo, så inget har skickats eller sparats.'};
+</script>
+</body>
+</html>
