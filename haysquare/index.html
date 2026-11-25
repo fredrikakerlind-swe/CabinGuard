@@ -642,7 +642,7 @@ self.onmessage=async e=>{const d=e.data;
  if(d.type==='run'){try{const out=await clf(d.audio,{top_k:10});self.postMessage({type:'result',out})}catch(err){self.postMessage({type:'error',msg:String(err)})}}
 };`;
 const WIN=16000*3;
-let worker=null,ready=false,busy=false,ctx=null,stream=null,proc=null,analyser=null,listening=false,lastLog={},rafId,ring=new Float32Array(WIN),filled=0,loadPromise=null,hist=[];
+let worker=null,ready=false,busy=false,ctx=null,stream=null,proc=null,analyser=null,listening=false,rafId,ring=new Float32Array(WIN),filled=0,loadPromise=null,hist=[];
 const micBtn=document.getElementById('micBtn'),loadMsg=document.getElementById('loadMsg'),livePanel=document.getElementById('livePanel');
 function setVerdict(t,x,col){vTitle.textContent=t;vText.textContent=x;vTitle.style.color=col||''}
 function addLog(g,name,score){const t=new Date().toLocaleTimeString('sv-SE');const ul=document.getElementById('log');const e=ul.querySelector('.empty');if(e)e.remove();
@@ -660,6 +660,8 @@ function loadModel(){if(loadPromise)return loadPromise;
  return loadPromise}
 function tick(){if(!listening||busy||!ready||filled<16000)return;busy=true;
  const a=new Float32Array(WIN);const n=Math.min(filled,WIN);a.set(ring.subarray(WIN-n),WIN-n);worker.postMessage({type:'run',audio:a.subarray(WIN-n)})}
+const OTHER={key:'other',label:'Övrigt ljud',lvl:'ok'};let lastName='',lastTime=0;
+function logSound(g,c){const now=Date.now();if(c.name!==lastName||now-lastTime>10000){addLog(g,tr(c.name),c.score);lastName=c.name;lastTime=now}}
 function handle(out){
  const cats=out.map(o=>({name:o.label,score:o.score}));
  hist.push(cats);if(hist.length>3)hist.shift();
@@ -669,11 +671,11 @@ function handle(out){
  H.innerHTML=(sil?[cats[0]]:top).map(c=>`<li><span>${tr(c.name)}</span><span class="pct">${Math.round(c.score*100)} %</span><div class="bar"><div style="width:${Math.min(100,Math.round(c.score*100))}%"></div></div></li>`).join('')||'<li class="empty" style="display:block">Inget tydligt ljud.</li>';
  if(sil||!top.length||top[0].score<.08){setVerdict('Tyst och lugnt','Inga avvikande ljud just nu.','#7fd1a4');return}
  let best=null;
- for(const c of top){if(c.score<.1)continue;const n=c.name.toLowerCase();const g=GROUPS.find(G=>G.m.some(k=>n.includes(k)));if(g){best={g,c};break}}
- if(!best){setVerdict(tr(top[0].name),'Vardagsljud. Inget som tyder på risk.','#fff');return}
+ for(const c of top){if(c.score<.1)continue;const n=c.name.toLowerCase();const g=GROUPS.find(G=>G.m.some(k=>new RegExp('(^|[^a-z])'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test(n)));if(g){best={g,c};break}}
+ if(!best){setVerdict(tr(top[0].name),'Vardagsljud. Inget som tyder på risk.','#fff');if(top[0].score>=.15)logSound(OTHER,top[0]);return}
  const col={alert:'#ff8a72',warn:'#f2bd63',ok:'#7fd1a4'}[best.g.lvl];
  setVerdict(tr(best.c.name),best.g.label+'. '+best.g.text,col);
- const now=Date.now(),k=best.g.key+best.c.name;if(best.g.lvl!=='ok'||!lastLog[k]){if(!lastLog[k]||now-lastLog[k]>8000)addLog(best.g,tr(best.c.name),best.c.score)}lastLog[k]=now;
+ logSound(best.g,best.c);
 }
 function meterLoop(){const a=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(a);let s=0;for(const v of a)s+=v*v;const rms=Math.sqrt(s/a.length);
  const db=Math.max(0,Math.min(100,20*Math.log10(rms+1e-8)+100));meter.style.width=Math.max(0,(db-25)/60*100)+'%';dbv.textContent='≈ '+Math.round(db-30)+' dB';rafId=requestAnimationFrame(meterLoop)}
