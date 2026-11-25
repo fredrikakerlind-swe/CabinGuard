@@ -386,7 +386,7 @@ footer .logo{margin-bottom:10px}
     <div class="section-head reveal">
       <span class="eyebrow">Live demo</span>
       <h2>Låt CabinGuard lyssna på ditt rum</h2>
-      <p>En öppen AI-modell (AST, tränad på AudioSet med 527 ljudtyper) klassar ljudet runt dig i realtid. Allt sker i din webbläsare och ljudet lämnar aldrig din enhet.</p>
+      <p>En öppen AI-modell (YAMNet, 521 ljudtyper) klassar ljudet runt dig i realtid. Allt sker i din webbläsare och ljudet lämnar aldrig din enhet.</p>
     </div>
     <div class="live-grid reveal">
       <div class="panel" id="livePanel">
@@ -411,7 +411,7 @@ footer .logo{margin-bottom:10px}
       <div class="panel">
         <h4>Händelselogg med tidsstämpel</h4>
         <ul class="log" id="log"><li class="empty">Inga händelser ännu.</li></ul>
-        <p class="note"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Modellen är inte tränad specifikt för CabinGuard, så bedömningarna är ungefärliga. Första gången laddas en modell på cirka 90 MB, därefter sparas den i webbläsaren. Varje analys tar en eller ett par sekunder.</p>
+        <p class="note"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Modellen är inte tränad specifikt för CabinGuard, så bedömningarna är ungefärliga. Första gången laddas en modell på cirka 4 MB.</p>
       </div>
     </div>
   </div>
@@ -506,7 +506,7 @@ footer .logo{margin-bottom:10px}
 <footer>
   <div class="wrap">
     <div><a href="#" class="logo"><span>CabinGuard<small>by Haysquare</small></span></a><div>Ett produktkoncept framtaget under Haydays 2026.</div></div>
-    <div style="max-width:460px">Funktioner, priser och prestanda är inte verifierade. Mätvärdena i den interaktiva demon är simulerade. Live demon använder en allmän ljudmodell (AST) och analyserar ljudet lokalt i webbläsaren.</div>
+    <div style="max-width:460px">Funktioner, priser och prestanda är inte verifierade. Mätvärdena i den interaktiva demon är simulerade. Live demon använder en allmän ljudmodell (YAMNet) och analyserar ljudet lokalt i webbläsaren.</div>
   </div>
 </footer>
 
@@ -564,7 +564,7 @@ function show(s){const col=C[s.lvl],b=document.getElementById('banner');
  draw(s.series,s.series.startsWith('hum')?C.water:(s.id==='frost'?C.frost:(s.lvl==='ok'?C.ok:col)))}
 show(S[0]);
 
-/* live demo (AST via transformers.js) */
+/* live demo (YAMNet via MediaPipe) */
 const GROUPS=[
  {key:'water',label:'Möjligt vattenläckage',text:'Ljud som liknar rinnande eller droppande vatten.',lvl:'alert',m:['water','drip','pour','trickle','faucet','sink','toilet','bathtub','fill (with liquid)','gurgling','stream','splash','liquid','boiling']},
  {key:'alarm',label:'Larmsignal',text:'Något som låter som en brandvarnare eller ett larm.',lvl:'alert',m:['smoke detector','fire alarm','alarm','siren','beep','buzzer','reversing beeps']},
@@ -578,38 +578,24 @@ const GROUPS=[
 ];
 const SV={'Speech':'Tal','Male speech, man speaking':'Mansröst','Female speech, woman speaking':'Kvinnoröst','Child speech, kid speaking':'Barnröst','Conversation':'Samtal','Narration, monologue':'Monolog','Babbling':'Joller','Whispering':'Viskning','Shout':'Rop','Yell':'Skrik','Screaming':'Skrik','Laughter':'Skratt','Baby laughter':'Bebisskratt','Giggle':'Fniss','Snicker':'Fnissande','Belly laugh':'Gapskratt','Chuckle, chortle':'Småskratt','Crying, sobbing':'Gråt','Baby cry, infant cry':'Bebisgråt','Sigh':'Suck','Singing':'Sång','Choir':'Kör','Whistling':'Visslande','Breathing':'Andning','Snoring':'Snarkning','Cough':'Hosta','Throat clearing':'Harkling','Sneeze':'Nysning','Sniff':'Snörvling','Walk, footsteps':'Fotsteg','Run':'Spring','Clapping':'Handklapp','Finger snapping':'Fingerknäpp','Chewing, mastication':'Tuggande','Hands':'Händer','Hubbub, speech noise, speech babble':'Sorl','Children playing':'Barn som leker','Animal':'Djur','Domestic animals, pets':'Husdjur','Dog':'Hund','Bark':'Hundskall','Yip':'Gläfs','Howl':'Ylande','Bow-wow':'Vov','Growling':'Morrande','Whimper (dog)':'Gnäll','Cat':'Katt','Purr':'Spinnande','Meow':'Mjau','Hiss':'Väsning','Livestock, farm animals, working animals':'Lantbruksdjur','Horse':'Häst','Cattle, bovinae':'Nötkreatur','Moo':'Råmande','Pig':'Gris','Sheep':'Får','Chicken, rooster':'Höns','Wild animals':'Vilda djur','Bird':'Fågel','Bird vocalization, bird call, bird song':'Fågelsång','Chirp, tweet':'Kvitter','Squawk':'Skrän','Crow':'Kråka','Caw':'Kraxande','Owl':'Uggla','Rodents, rats, mice':'Gnagare','Mouse':'Mus','Insect':'Insekt','Fly, housefly':'Fluga','Bee, wasp, etc.':'Bi eller geting','Mosquito':'Mygga','Music':'Musik','Musical instrument':'Musikinstrument','Guitar':'Gitarr','Electric guitar':'Elgitarr','Acoustic guitar':'Akustisk gitarr','Piano':'Piano','Keyboard (musical)':'Klaviatur','Synthesizer':'Synt','Drum':'Trumma','Drum kit':'Trumset','Bass guitar':'Elbas','Violin, fiddle':'Fiol','Pop music':'Popmusik','Rock music':'Rockmusik','Hip hop music':'Hiphop','Electronic music':'Elektronisk musik','Jazz':'Jazz','Classical music':'Klassisk musik','Song':'Låt','Background music':'Bakgrundsmusik','Radio':'Radio','Television':'TV','Wind':'Vind','Rustling leaves':'Prasslande löv','Wind noise (microphone)':'Vindbrus','Thunderstorm':'Åskväder','Thunder':'Åska','Water':'Vatten','Rain':'Regn','Raindrop':'Regndroppar','Rain on surface':'Regn mot yta','Stream':'Bäck','Waterfall':'Vattenfall','Ocean':'Hav','Waves, surf':'Vågor','Gurgling':'Porlande','Fire':'Eld','Crackle':'Knaster','Vehicle':'Fordon','Car':'Bil','Car passing by':'Förbipasserande bil','Truck':'Lastbil','Bus':'Buss','Motorcycle':'Motorcykel','Traffic noise, roadway noise':'Trafikbuller','Train':'Tåg','Aircraft':'Flygplan','Helicopter':'Helikopter','Boat, Water vehicle':'Båt','Engine':'Motor','Idling':'Tomgång','Door':'Dörr','Doorbell':'Dörrklocka','Ding-dong':'Dingdong','Sliding door':'Skjutdörr','Slam':'Smäll','Knock':'Knackning','Tap':'Knack','Squeak':'Gnissel','Cupboard open or close':'Skåpdörr','Drawer open or close':'Låda','Dishes, pots, and pans':'Disk och kastruller','Cutlery, silverware':'Bestick','Chopping (food)':'Hackning','Frying (food)':'Stekning','Microwave oven':'Mikrovågsugn','Blender':'Mixer','Water tap, faucet':'Vattenkran','Sink (filling or washing)':'Diskho','Bathtub (filling or washing)':'Badkar','Hair dryer':'Hårtork','Toilet flush':'Toalettspolning','Toothbrush':'Tandborste','Vacuum cleaner':'Dammsugare','Zipper (clothing)':'Dragkedja','Keys jangling':'Nyckelknippa','Coin (dropping)':'Mynt','Scissors':'Sax','Typing':'Skrivande','Computer keyboard':'Tangentbord','Writing':'Skrivande','Alarm':'Larm','Telephone':'Telefon','Telephone bell ringing':'Telefonsignal','Ringtone':'Ringsignal','Alarm clock':'Väckarklocka','Siren':'Siren','Buzzer':'Summer','Smoke detector, smoke alarm':'Brandvarnare','Fire alarm':'Brandlarm','Beep, bleep':'Pip','Mechanisms':'Mekanik','Clock':'Klocka','Tick':'Tickande','Tick-tock':'Tick tack','Mechanical fan':'Fläkt','Air conditioning':'Luftkonditionering','Refrigerator':'Kylskåp','Washing machine':'Tvättmaskin','Dishwasher':'Diskmaskin','Tools':'Verktyg','Hammer':'Hammare','Jackhammer':'Tryckluftsborr','Sawing':'Sågning','Power tool':'Elverktyg','Drill':'Borrmaskin','Explosion':'Explosion','Gunshot, gunfire':'Skott','Fireworks':'Fyrverkerier','Wood':'Trä','Chop':'Hugg','Splinter':'Splittring','Crack':'Knak','Glass':'Glas','Chink, clink':'Klirr','Shatter':'Krossat glas','Liquid':'Vätska','Splash, splatter':'Plask','Drip':'Dropp','Pour':'Hällande','Trickle, dribble':'Sipprande','Fill (with liquid)':'Påfyllning','Boiling':'Kokande','Silence':'Tystnad','Inside, small room':'Litet rum','Inside, large room or hall':'Stort rum','Outside, urban or manmade':'Utomhus i stad','Outside, rural or natural':'Utomhus på landet','Static':'Brus','White noise':'Vitt brus','Pink noise':'Brus','Hum':'Surr','Noise':'Buller','Echo':'Eko','Thump, thud':'Duns','Bang':'Smäll','Smash, crash':'Krasch','Breaking':'Något går sönder','Bouncing':'Studsande','Scratch':'Krafsande','Scrape':'Skrapande','Rub':'Gnidning','Rumble':'Muller','Clatter':'Slammer','Rattle':'Skrammel','Creak':'Knarr','Rustle':'Prassel','Crumpling, crinkling':'Skrynklande','Tearing':'Rivande','Click':'Klick','Whoosh, swoosh, swish':'Sus','Sound effect':'Ljudeffekt','Vibration':'Vibration','Television':'TV'};
 const tr=n=>SV[n]||n;
-const MODEL='Xenova/ast-finetuned-audioset-10-10-0.4593';
-const WORKER=`import {pipeline,env} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2';
-env.allowLocalModels=false;let clf=null;
-self.onmessage=async e=>{const d=e.data;
- if(d.type==='load'){try{clf=await pipeline('audio-classification','${MODEL}',{dtype:'q8',device:'wasm',progress_callback:p=>{if(p.status==='progress'&&p.file&&p.file.endsWith('.onnx'))self.postMessage({type:'progress',pct:p.progress})}});self.postMessage({type:'ready'})}catch(err){self.postMessage({type:'error',msg:String(err)})}}
- if(d.type==='run'){try{const out=await clf(d.audio,{top_k:10});self.postMessage({type:'result',out})}catch(err){self.postMessage({type:'error',msg:String(err)})}}
-};`;
-const WIN=16000*3;
-let worker=null,ready=false,busy=false,ctx=null,stream=null,proc=null,analyser=null,listening=false,rafId,ring=new Float32Array(WIN),filled=0,loadPromise=null,hist=[];
+let classifier=null,ctx=null,stream=null,proc=null,analyser=null,listening=false,rafId,loadPromise=null;
 const micBtn=document.getElementById('micBtn'),loadMsg=document.getElementById('loadMsg'),livePanel=document.getElementById('livePanel');
 function setVerdict(t,x,col){vTitle.textContent=t;vText.textContent=x;vTitle.style.color=col||''}
 function addLog(g,name,score){const t=new Date().toLocaleTimeString('sv-SE');const ul=document.getElementById('log');const e=ul.querySelector('.empty');if(e)e.remove();
  const li=document.createElement('li');const lv={alert:['Larm','#ff6b4a'],warn:['Varning','#f0a000'],ok:['Info','#5fbf8a']}[g.lvl];
  li.innerHTML=`<time>${t}</time><span>${name} <span style="color:rgba(255,255,255,.5)">· ${g.label.toLowerCase()} · ${Math.round(score*100)} %</span></span><span class="tag" style="background:${lv[1]}33;color:${lv[1]}">${lv[0]}</span>`;ul.prepend(li);while(ul.children.length>40)ul.lastChild.remove()}
 function loadModel(){if(loadPromise)return loadPromise;
- loadPromise=new Promise((res,rej)=>{
-  worker=new Worker(URL.createObjectURL(new Blob([WORKER],{type:'text/javascript'})),{type:'module'});
-  worker.onmessage=e=>{const d=e.data;
-   if(d.type==='progress')loadMsg.textContent='Laddar modellen… '+Math.round(d.pct||0)+' %';
-   else if(d.type==='ready'){ready=true;res()}
-   else if(d.type==='error'){if(!ready){loadPromise=null;rej(new Error(d.msg))}else{console.error(d.msg);busy=false}}
-   else if(d.type==='result'){busy=false;if(listening){handle(d.out);tick()}}};
-  worker.postMessage({type:'load'});});
+ loadPromise=(async()=>{
+  const {AudioClassifier,FilesetResolver}=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-audio@0.10.0');
+  const fs=await FilesetResolver.forAudioTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-audio@0.10.0/wasm');
+  classifier=await AudioClassifier.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/audio_classifier/yamnet/float32/1/yamnet.tflite'},maxResults:10,scoreThreshold:.03});
+ })().catch(e=>{loadPromise=null;throw e});
  return loadPromise}
-function tick(){if(!listening||busy||!ready||filled<16000)return;busy=true;
- const a=new Float32Array(WIN);const n=Math.min(filled,WIN);a.set(ring.subarray(WIN-n),WIN-n);worker.postMessage({type:'run',audio:a.subarray(WIN-n)})}
 const OTHER={key:'other',label:'Övrigt ljud',lvl:'ok'};let lastName='',lastTime=0;
 function logSound(g,c){const now=Date.now();if(c.name!==lastName||now-lastTime>10000){addLog(g,tr(c.name),c.score);lastName=c.name;lastTime=now}}
 function handle(out){
  const cats=out.map(o=>({name:o.label,score:o.score}));
- hist.push(cats);if(hist.length>3)hist.shift();
- const H=document.getElementById('hears');
+  const H=document.getElementById('hears');
  const top=cats.filter(c=>c.name!=='Silence'&&!/^(Inside|Outside)/.test(c.name)).slice(0,6);
  const sil=cats[0]&&cats[0].name==='Silence'&&cats[0].score>.4;
  H.innerHTML=(sil?[cats[0]]:top).map(c=>`<li><span>${tr(c.name)}</span><span class="pct">${Math.round(c.score*100)} %</span><div class="bar"><div style="width:${Math.min(100,Math.round(c.score*100))}%"></div></div></li>`).join('')||'<li class="empty" style="display:block">Inget tydligt ljud.</li>';
@@ -626,15 +612,14 @@ function meterLoop(){const a=new Float32Array(analyser.fftSize);analyser.getFloa
 async function start(){
  try{
   micBtn.disabled=true;
-  if(!ready){loadMsg.textContent='Laddar modellen…';await loadModel()}
+  if(!classifier){loadMsg.textContent='Laddar modellen…';await loadModel()}
   loadMsg.textContent='Ber om mikrofon…';
   stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
   ctx=new AudioContext({sampleRate:16000});
   const src=ctx.createMediaStreamSource(stream);
   analyser=ctx.createAnalyser();analyser.fftSize=1024;src.connect(analyser);
-  proc=ctx.createScriptProcessor(4096,1,1);src.connect(proc);proc.connect(ctx.destination);
-  ring=new Float32Array(WIN);filled=0;
-  proc.onaudioprocess=e=>{const d=e.inputBuffer.getChannelData(0);ring.copyWithin(0,d.length);ring.set(d,WIN-d.length);filled=Math.min(WIN,filled+d.length);if(!busy)tick()};
+  proc=ctx.createScriptProcessor(16384,1,1);src.connect(proc);proc.connect(ctx.destination);
+  proc.onaudioprocess=e=>{if(!listening)return;const r=classifier.classify(e.inputBuffer.getChannelData(0));if(r&&r[0])handle(r[0].classifications[0].categories.map(c=>({label:c.categoryName,score:c.score})))};
   listening=true;livePanel.classList.add('listening');meterLoop();
   micBtn.querySelector('span').textContent='Stoppa lyssning';loadMsg.textContent='Lyssnar lokalt i din webbläsare';
   setVerdict('Lyssnar…','Gör ett ljud och se vad som händer.','#fff');
