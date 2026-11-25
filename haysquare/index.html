@@ -235,6 +235,9 @@ footer{background:#0f2a23;color:rgba(255,255,255,.65);padding:50px 0;font-size:.
 footer .wrap{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap}
 footer .logo{margin-bottom:10px}
 
+.ppl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px}
+.ppl span{text-align:center;padding:10px 6px;border-radius:10px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.55);font-size:.9rem;font-weight:500;transition:all .25s}
+.ppl span.on{background:var(--amber);color:#16110a;font-weight:700}
 /* ===== Haysquare profil ===== */
 :root{--forest:#0e0e0e;--forest-2:#1a1a1a;--forest-3:#ff4e00;--moss:#a8a8a8;--cream:#f4f2ec;--paper:#ffffff;--sand:#ebe8e0;--ink:#0e0e0e;--muted:#6b6b6b;--line:#e3dfd5;--amber:#ff4e00;--orange:#ff4e00;--radius:14px;--shadow:0 24px 60px -30px rgba(0,0,0,.45)}
 body{font-family:Geist,Inter,system-ui,sans-serif}
@@ -290,6 +293,7 @@ nav.scrolled{background:rgba(14,14,14,.92)}
 .thanks{color:#0e0e0e;font-weight:600}
 summary::after{color:var(--orange)}
 footer{background:#0e0e0e;color:#8a8a8a}
+.ppl span.on{background:var(--orange);color:#0e0e0e}
 </style>
 </head>
 <body>
@@ -451,6 +455,8 @@ footer{background:#0e0e0e;color:#8a8a8a}
           <div class="orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg></div>
           <div class="verdict"><b id="vTitle">Lyssnar inte</b><span id="vText">Aktivera mikrofonen för att starta.</span></div>
         </div>
+        <h4>Antal personer som pratar (uppskattning)</h4>
+        <div class="ppl" id="ppl"><span data-n="0">Ingen</span><span data-n="1">1 person</span><span data-n="2">2 personer</span><span data-n="3">Fler än 2</span></div>
         <h4>Ljudnivå</h4>
         <div class="meter"><div id="meter"></div></div>
         <div class="db"><span>tyst</span><span id="dbv">· dB</span><span>högt</span></div>
@@ -649,8 +655,24 @@ function loadModel(){if(loadPromise)return loadPromise;
  return loadPromise}
 const OTHER={key:'other',label:'Övrigt ljud',lvl:'ok'};let lastName='',lastTime=0;
 function logSound(g,c){const now=Date.now();if(c.name!==lastName||now-lastTime>10000){addLog(g,tr(c.name),c.score);lastName=c.name;lastTime=now}}
+let voiceHist=[],lastPpl=0;
+function people(cats){
+ const has=(re,th)=>cats.some(c=>re.test(c.name)&&c.score>=th);
+ let est=0;
+ if(has(/^(Speech|Male speech|Female speech|Child speech|Narration|Whispering|Shout|Yell|Laughter|Giggle|Chuckle|Belly laugh|Snicker)/,.15))est=1;
+ if(has(/^Conversation/,.1))est=2;
+ if(has(/^(Hubbub|Crowd|Chatter|Children playing|Cheering|Applause)/,.1))est=3;
+ const voices=['Male speech','Female speech','Child speech'].filter(v=>cats.some(c=>c.name.startsWith(v)&&c.score>=.1));
+ const now=Date.now();voiceHist.push({est,voices,t:now});voiceHist=voiceHist.filter(h=>now-h.t<6000);
+ let e=Math.max(...voiceHist.map(h=>h.est));
+ const uniq=new Set(voiceHist.flatMap(h=>h.voices));if(uniq.size>=2&&e>=1)e=Math.max(e,2);
+ document.querySelectorAll('#ppl span').forEach(s=>s.classList.toggle('on',+s.dataset.n===e));
+ if(e>=1&&e!==lastPpl)addLog({label:'Röster',lvl:'warn'},['','1 person pratar','2 personer pratar','Fler än 2 personer pratar'][e],Math.max(...cats.map(c=>c.score)));
+ lastPpl=e;
+}
+function resetPeople(){voiceHist=[];lastPpl=0;document.querySelectorAll('#ppl span').forEach(s=>s.classList.remove('on'))}
 function handle(out){
- const cats=out.map(o=>({name:o.label,score:o.score}));
+ const cats=out.map(o=>({name:o.label,score:o.score}));people(cats);
   const H=document.getElementById('hears');
  const top=cats.filter(c=>c.name!=='Silence'&&!/^(Inside|Outside)/.test(c.name)).slice(0,6);
  const sil=cats[0]&&cats[0].name==='Silence'&&cats[0].score>.4;
@@ -684,7 +706,7 @@ async function start(){
  micBtn.disabled=false;
 }
 function stop(){listening=false;cancelAnimationFrame(rafId);if(proc)proc.disconnect();if(stream)stream.getTracks().forEach(t=>t.stop());if(ctx)ctx.close();
- livePanel.classList.remove('listening');meter.style.width='0';dbv.textContent='· dB';micBtn.querySelector('span').textContent='Aktivera lyssning';loadMsg.textContent='';setVerdict('Lyssnar inte','Aktivera mikrofonen för att starta.')}
+ livePanel.classList.remove('listening');resetPeople();meter.style.width='0';dbv.textContent='· dB';micBtn.querySelector('span').textContent='Aktivera lyssning';loadMsg.textContent='';setVerdict('Lyssnar inte','Aktivera mikrofonen för att starta.')}
 micBtn.onclick=()=>listening?stop():start();
 
 /* form */
