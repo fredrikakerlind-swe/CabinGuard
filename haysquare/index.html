@@ -656,12 +656,13 @@ function handle(out){
  const sil=cats[0]&&cats[0].name==='Silence'&&cats[0].score>.4;
  H.innerHTML=(sil?[cats[0]]:top).map(c=>`<li><span>${tr(c.name)}</span><span class="pct">${Math.round(c.score*100)} %</span><div class="bar"><div style="width:${Math.min(100,Math.round(c.score*100))}%"></div></div></li>`).join('')||'<li class="empty" style="display:block">Inget tydligt ljud.</li>';
  if(sil||!top.length||top[0].score<.08){setVerdict('Tyst och lugnt','Inga avvikande ljud just nu.','#7fd1a4');return}
- let best=null;
- for(const c of top){if(c.score<.1)continue;const n=c.name.toLowerCase();const g=GROUPS.find(G=>G.m.some(k=>new RegExp('(^|[^a-z])'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test(n)));if(g){best={g,c};break}}
- if(!best){setVerdict(tr(top[0].name),'Vardagsljud. Inget som tyder på risk.','#fff');if(top[0].score>=.15)logSound(OTHER,top[0]);return}
+ const c0=top[0],n0=c0.name.toLowerCase();
+ const g0=GROUPS.find(G=>G.m.some(k=>new RegExp('(^|[^a-z])'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test(n0)));
+ if(!g0){setVerdict(tr(c0.name),'Vardagsljud. Inget som tyder på risk.','#fff');if(c0.score>=.3)logSound(OTHER,c0);return}
+ const best={g:g0,c:c0};
  const col={alert:'#ff8a72',warn:'#f2bd63',ok:'#7fd1a4'}[best.g.lvl];
  setVerdict(tr(best.c.name),best.g.label+'. '+best.g.text,col);
- logSound(best.g,best.c);
+ if(best.c.score>=(best.g.lvl==='alert'?.2:.25))logSound(best.g,best.c);
 }
 function meterLoop(){const a=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(a);let s=0;for(const v of a)s+=v*v;const rms=Math.sqrt(s/a.length);
  const db=Math.max(0,Math.min(100,20*Math.log10(rms+1e-8)+100));meter.style.width=Math.max(0,(db-25)/60*100)+'%';dbv.textContent='≈ '+Math.round(db-30)+' dB';rafId=requestAnimationFrame(meterLoop)}
@@ -675,7 +676,7 @@ async function start(){
   const src=ctx.createMediaStreamSource(stream);
   analyser=ctx.createAnalyser();analyser.fftSize=1024;src.connect(analyser);
   proc=ctx.createScriptProcessor(16384,1,1);src.connect(proc);proc.connect(ctx.destination);
-  proc.onaudioprocess=e=>{if(!listening)return;const r=classifier.classify(e.inputBuffer.getChannelData(0));if(r&&r[0])handle(r[0].classifications[0].categories.map(c=>({label:c.categoryName,score:c.score})))};
+  proc.onaudioprocess=e=>{if(!listening)return;const r=classifier.classify(e.inputBuffer.getChannelData(0),ctx.sampleRate);if(r&&r[0])handle(r[0].classifications[0].categories.map(c=>({label:c.categoryName,score:c.score})))};
   listening=true;livePanel.classList.add('listening');meterLoop();
   micBtn.querySelector('span').textContent='Stoppa lyssning';loadMsg.textContent='Lyssnar lokalt i din webbläsare';
   setVerdict('Lyssnar…','Gör ett ljud och se vad som händer.','#fff');
