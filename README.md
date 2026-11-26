@@ -7,3 +7,7 @@ Sidan är en statisk `index.html` som publiceras via GitHub Pages. Live demon an
 ## Presentation
 
 `deck/index.html` is the CabinGuard presentation as a scrolling web page with a section menu, including two live parts: YAMNet listening to the room, and a cold room example that learns the normal state and flags deviations. `deck/slides.html` is the same content in presentation mode (arrow keys, F for full screen).
+
+## Next steps
+
+See [NEXT_STEPS.md](NEXT_STEPS.md) for proposed next steps and contacts per track. They are also the last two parts of the presentation.
