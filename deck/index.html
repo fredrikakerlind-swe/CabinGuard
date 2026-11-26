@@ -453,7 +453,7 @@ async function startMic(){const bs=document.querySelectorAll('[data-mic]');bs.fo
   ctx=new AudioContext({sampleRate:16000});const src=ctx.createMediaStreamSource(stream);
   an=ctx.createAnalyser();an.fftSize=1024;src.connect(an);
   proc=ctx.createScriptProcessor(16384,1,1);src.connect(proc);proc.connect(ctx.destination);
-  proc.onaudioprocess=e=>{if(!listening)return;const r=clf.classify(e.inputBuffer.getChannelData(0),ctx.sampleRate);if(r&&r[0])onCats(r[0].classifications[0].categories.map(c=>({name:c.categoryName,score:c.score})))};
+  proc.onaudioprocess=e=>{if(!listening)return;if(performance.now()-lastFeat>900){lastFeat=performance.now();try{featTick()}catch(err){console.error(err)}}const r=clf.classify(e.inputBuffer.getChannelData(0),ctx.sampleRate);if(r&&r[0])onCats(r[0].classifications[0].categories.map(c=>({name:c.categoryName,score:c.score})))};
   listening=true;bandIdx=null;recent=[];micUI();setA('ok','🎧','Listening…','Make a sound and watch what happens.');if(!base.ready&&!learn.active)setB('off',GICON.cold,'No normal state yet','Turn on the compressor, then learn the normal state.');loop();
  }catch(err){console.error(err);micUI(err.name==='NotAllowedError'?'Microphone access was denied':'Could not start: '+String(err.message||err).slice(0,80))}
  bs.forEach(b=>b.disabled=false)}
@@ -472,10 +472,10 @@ function logOnce(p,key,lvl,ic,title,sub){const L=lastLog[p],now=Date.now();if(ke
 const levels=new Array(64).fill(0);let lastPush=0,lastFeat=0;
 function drawWave(){const c=$('aWave');if(!c)return;const x=c.getContext('2d'),w=c.width,h=c.height;x.clearRect(0,0,w,h);
  const col=getComputedStyle($('aAssess')).getPropertyValue('--lvc').trim()||'#9A958B';x.fillStyle='rgba(255,255,255,.08)';x.fillRect(0,h/2-1,w,2);
- const n=levels.length,g=w/n,bw=g*.5;x.fillStyle=col;levels.forEach((v,i)=>{const bh=Math.max(8,v*(h-16));x.beginPath();x.roundRect(i*g+(g-bw)/2,(h-bh)/2,bw,bh,bw/2);x.fill()})}
-function loop(){if(!listening)return;const a=new Float32Array(an.fftSize);an.getFloatTimeDomainData(a);let s=0;for(const v of a)s+=v*v;const rms=Math.sqrt(s/a.length);
+ const n=levels.length,g=w/n,bw=g*.5;x.fillStyle=col;levels.forEach((v,i)=>{const bh=Math.max(8,v*(h-16));const px=i*g+(g-bw)/2,py=(h-bh)/2;if(x.roundRect){x.beginPath();x.roundRect(px,py,bw,bh,bw/2);x.fill()}else x.fillRect(px,py,bw,bh)})}
+function loop(){if(!listening)return;try{const a=new Float32Array(an.fftSize);an.getFloatTimeDomainData(a);let s=0;for(const v of a)s+=v*v;const rms=Math.sqrt(s/a.length);
  const now=performance.now();if(now-lastPush>70){levels.push(Math.min(1,Math.pow(rms*6,.6)));levels.shift();lastPush=now;drawWave()}
- if(now-lastFeat>250){lastFeat=now;featTick()}raf=requestAnimationFrame(loop)}
+ if(now-lastFeat>250){lastFeat=now;featTick()}}catch(e){console.error(e)}raf=requestAnimationFrame(loop)}
 /* hears + verdict on slide A */
 function onCats(cats){
  $('aHears').innerHTML=cats.slice(0,5).map(c=>`<div class="lv-row"><span>${c.name}</span><b>${Math.round(c.score*100)} %</b><div class="lv-track"><div style="width:${Math.min(100,Math.round(c.score*100))}%"></div></div></div>`).join('')||'<p class="lv-empty">Nothing clear.</p>';
@@ -501,12 +501,12 @@ function specDev(){if(!recent.length)return{pct:0,dir:0};let za=0,zs=0;for(let b
 const thr=()=>+$('bSens').value;
 function showDev(p){$('bDev').textContent=base.ready?p+' %':'–';$('bDevFill').style.width=(base.ready?p:0)+'%'}
 const fmt=s=>{s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
-function startLearn(){if(!listening){$('bStatus').textContent='Start listening first';return}
+async function startLearn(){if(!listening){$('bStatus').textContent='Starting the microphone…';await startMic();if(!listening){$('bStatus').textContent='Could not start the microphone';return}}
  Object.assign(learn,{active:true,start:Date.now(),dur:+$('bDur').value,sum:new Array(NB).fill(0),sq:new Array(NB).fill(0),n:0,cat:{},catN:0});
  $('bProg').style.visibility='visible';addLog('b','ok',GICON.learn,'Learning started',`Normal state, ${fmt(learn.dur)}`)}
 function stopLearn(msg){learn.active=false;$('bProg').style.visibility='hidden';$('bStatus').textContent=msg}
 function finishLearn(){learn.active=false;$('bProg').style.visibility='hidden';
- if(learn.n<4){$('bStatus').textContent='Too little sound collected; try again';return}
+ if(learn.n<4){$('bStatus').textContent='Too little sound collected ('+learn.n+' samples); try again';return}
  base.mu=learn.sum.map(s=>s/learn.n);base.sd=learn.sq.map((q,b)=>Math.sqrt(Math.max(0,q/learn.n-base.mu[b]*base.mu[b])));
  base.cats={};for(const k in learn.cat)base.cats[k]=learn.cat[k]/Math.max(1,learn.catN);base.at=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});base.dur=learn.dur;base.ready=true;overCnt=0;
  addLog('b','ok',GICON.learn,'Normal state learned',`${fmt(base.dur)} at ${base.at}; no audio stored`);upd()}
@@ -514,7 +514,7 @@ function upd(){const st=$('bStatus');
  if(learn.active){const left=learn.dur-(Date.now()-learn.start)/1000;st.textContent='Learning… '+fmt(left)+' left';$('bProg').firstElementChild.style.width=Math.min(100,100*(1-left/learn.dur))+'%';if(left<=0)finishLearn();return}
  if(sched){const left=(sched-Date.now())/1000;st.textContent='Starts at '+new Date(sched).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' (in '+fmt(left)+')';if(left<=0){sched=null;if(listening){startLearn();return upd()}st.textContent='Missed the start: the microphone was off'}return}
  st.textContent=base.ready?`Learned at ${base.at} (${fmt(base.dur)})`:'No normal state learned'}
-$('bLearn').onclick=()=>{if(document.querySelector('input[name=bWhen]:checked').value==='now'){sched=null;startLearn()}
+$('bLearn').onclick=()=>{if(document.querySelector('input[name=bWhen]:checked').value==='now'){sched=null;startLearn().then(upd);return}
  else{const [h,m]=$('bTime').value.split(':').map(Number);const d=new Date();d.setHours(h,m,0,0);if(d<=new Date())d.setDate(d.getDate()+1);sched=d.getTime()}upd()};
 $('bSens').onchange=()=>$('bThr').style.left=thr()+'%';$('bThr').style.left=thr()+'%';setInterval(upd,1000);
 function coldCats(cats,c0,g0){
