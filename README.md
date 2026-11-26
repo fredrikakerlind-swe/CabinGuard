@@ -11,3 +11,7 @@ Sidan är en statisk `index.html` som publiceras via GitHub Pages. Live demon an
 ## Next steps
 
 See [NEXT_STEPS.md](NEXT_STEPS.md) for proposed next steps and contacts per track. They are also the last two parts of the presentation.
+
+## Customer view mockup
+
+`portal/index.html` is a clickable mockup of the customer portal with fictional data: several sites (restaurant, mountain cabin, summer house, property) with rooms, alarms, deviation from the learned normal state, 24 hour charts and event logs.
